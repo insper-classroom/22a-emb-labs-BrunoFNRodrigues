@@ -172,7 +172,7 @@ int main(void)
   // aplicacoes embarcadas não devem sair do while(1).
   while (1)
   {
-	if (pio_get(PIOA, PIO_INPUT, BUT1_PIO_IDX_MASK) != 1){
+	if (pio_get(BUT_PIO, PIO_INPUT, BUT_PIO_IDX_MASK) != 1){
 		int i = 0;
 		for (i = 0; i < 6; ++i){
 			pio_set(PIOC, LED_PIO_IDX_MASK);      // Coloca 1 no pino LED
@@ -182,17 +182,17 @@ int main(void)
 		}
 	}
 	
-	if (pio_get(PIOD, PIO_INPUT, BUT_PIO_IDX_MASK) != 1){
+	if (pio_get(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK) != 1){
 		int i = 0;
 		for (i = 0; i < 6; ++i){
-			pio_set(PIOA, OLED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
+			pio_set(OLED1_PIO, OLED1_PIO_IDX_MASK);      // Coloca 1 no pino LED
 			delay_ms(500);                        // Delay por software de 200 ms
-			pio_clear(PIOA, OLED1_PIO_IDX_MASK);    // Coloca 0 no pino do LED
+			pio_clear(OLED1_PIO, OLED1_PIO_IDX_MASK);    // Coloca 0 no pino do LED
 			delay_ms(500);
 		}
 	}
 		
-	if (pio_get(PIOC, PIO_INPUT, BUT2_PIO_IDX_MASK) != 1){
+	if (pio_get(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK) != 1){
 		int i = 0;
 		for (i = 0; i < 6; ++i){
 			pio_set(OLED2_PIO, OLED2_PIO_IDX_MASK);      // Coloca 1 no pino LED
