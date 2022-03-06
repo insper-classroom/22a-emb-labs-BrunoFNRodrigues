@@ -112,7 +112,7 @@ void but2_callback(void)
 
 void but3_callback(void)
 {
-	periodo -= 100;
+	periodo += 100;
 	display_refresh = 1;
 }
 
