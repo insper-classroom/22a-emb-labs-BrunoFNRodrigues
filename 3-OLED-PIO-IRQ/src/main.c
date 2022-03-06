@@ -61,10 +61,15 @@
 volatile char but_flag;
 volatile char but_down;
 volatile char but_led;
+volatile char display_refresh;
+volatile char paro;
 
 /************************************************************************/
 /* variaveis globais                                                    */
 /************************************************************************/
+
+int periodo = 500;
+int x = 20;
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -72,7 +77,7 @@ volatile char but_led;
 
 void init(void);
 void io_init(void);
-void pisca_led(int n, int t);
+void pisca_led(int n);
 
 /************************************************************************/
 /* interrupcoes                                                         */
@@ -99,30 +104,65 @@ void but1_callback(void)
     }
 }
 
+void but2_callback(void)
+{
+	paro = 1;
+	x = 20;
+}
+
+void but3_callback(void)
+{
+	periodo -= 100;
+	display_refresh = 1;
+}
+
 /************************************************************************/
 /* funcoes                                                              */
 /************************************************************************/
+//Atualiza progresso da piscada
+void pisca_status(int i, int n){
+	int w = 100/n;
+	
+	if ( x == 20){
+		gfx_mono_draw_filled_rect(20, 24, 100, 5, 0);
+		gfx_mono_draw_rect(20, 24, 100, 5, 1);
+	}
+	
+	gfx_mono_draw_filled_rect(x, 24, w, 5, 1);
+	x += w;
+	
+	if ( x == 120){
+		x = 20;
+	}
+}
+
 //Atualiza a freq no dislpay
 void display_freq(double f){
 	f = 1/(f*0.002);
 	char freq_str[128];
 	sprintf(freq_str, "%.2f", f);
 	
-	gfx_mono_draw_string("f:", 10,16, &sysfont);
-	gfx_mono_draw_string(freq_str, 30,16, &sysfont);
+	gfx_mono_draw_string("f:", 10,8, &sysfont);
+	gfx_mono_draw_string(freq_str, 30,8, &sysfont);
 }
 
 
 // pisca led N vez no periodo T
-void pisca_led(int n, int t){
-	
+void pisca_led(int n){
+
 	for (int i=0;i<n;i++){
+		if(paro){
+			paro = 0;
+			break;
+		}
+		pisca_status(i, n);
 		pio_clear(LED_PIO, LED_PIO_IDX_MASK);
-		delay_ms(t);
+		delay_ms(periodo);
 		pio_set(LED_PIO, LED_PIO_IDX_MASK);
-		delay_ms(t);	
+		delay_ms(periodo);	
 	}
 }
+
 
 // Inicializa botao SW0 do kit com interrupcao
 void io_init(void)
@@ -159,6 +199,7 @@ void io_init(void)
 	NVIC_SetPriority(BUT1_PIO_ID, 4); // Prioridade 4
 	
 	/**************************************************/
+	// BOTÂO DA PLACA
 	/**************************************************/
 	
 	// Inicializa clock do periférico PIO responsavel pelo botao
@@ -186,6 +227,66 @@ void io_init(void)
 	// com prioridade 4 (quanto mais próximo de 0 maior)
 	NVIC_EnableIRQ(BUT_PIO_ID);
 	NVIC_SetPriority(BUT_PIO_ID, 4); // Prioridade 4
+	
+	/**************************************************/
+	// BOTÂO DA OLED2
+	/**************************************************/
+	
+	// Inicializa clock do periférico PIO responsavel pelo botao
+	pmc_enable_periph_clk(BUT2_PIO_ID);
+
+	// Configura PIO para lidar com o pino do botão como entrada
+	// com pull-up
+	pio_configure(BUT2_PIO, PIO_INPUT, BUT2_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE);
+	pio_set_debounce_filter(BUT2_PIO, BUT2_PIO_IDX_MASK, 60);
+
+	// Configura interrupção no pino referente ao botao e associa
+	// função de callback caso uma interrupção for gerada
+	// a função de callback é a: but_callback()
+	pio_handler_set(BUT2_PIO,
+	BUT2_PIO_ID,
+	BUT2_PIO_IDX_MASK,
+	PIO_IT_RISE_EDGE,
+	but2_callback);
+
+	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
+	pio_enable_interrupt(BUT2_PIO, BUT2_PIO_IDX_MASK);
+	pio_get_interrupt_status(BUT2_PIO);
+	
+	// Configura NVIC para receber interrupcoes do PIO do botao
+	// com prioridade 4 (quanto mais próximo de 0 maior)
+	NVIC_EnableIRQ(BUT2_PIO_ID);
+	NVIC_SetPriority(BUT2_PIO_ID, 4); // Prioridade 4
+	
+	/**************************************************/
+	// BOTÂO DA OLED3
+	/**************************************************/
+	
+	// Inicializa clock do periférico PIO responsavel pelo botao
+	pmc_enable_periph_clk(BUT3_PIO_ID);
+
+	// Configura PIO para lidar com o pino do botão como entrada
+	// com pull-up
+	pio_configure(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE);
+	pio_set_debounce_filter(BUT3_PIO, BUT3_PIO_IDX_MASK, 60);
+
+	// Configura interrupção no pino referente ao botao e associa
+	// função de callback caso uma interrupção for gerada
+	// a função de callback é a: but_callback()
+	pio_handler_set(BUT3_PIO,
+	BUT3_PIO_ID,
+	BUT3_PIO_IDX_MASK,
+	PIO_IT_RISE_EDGE,
+	but3_callback);
+
+	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
+	pio_enable_interrupt(BUT3_PIO, BUT3_PIO_IDX_MASK);
+	pio_get_interrupt_status(BUT3_PIO);
+	
+	// Configura NVIC para receber interrupcoes do PIO do botao
+	// com prioridade 4 (quanto mais próximo de 0 maior)
+	NVIC_EnableIRQ(BUT3_PIO_ID);
+	NVIC_SetPriority(BUT3_PIO_ID, 4); // Prioridade 4
 }
 
 /************************************************************************/
@@ -207,28 +308,33 @@ int main (void)
 
   /* Insert application code here, after the board has been initialized. */
 	int n = 5;
-	int t = 500;
 	
 	while(1) {
 
 		if(but_flag){
-			t += 100;
+			periodo += 100;
 			but_flag = 0;
-			display_freq(t);
+			display_freq(periodo);
 		}
 		
 		if(but_down){
-			if (t > 100){
-				t -= 100;
+			if (periodo > 100){
+				periodo -= 100;
 			}
 
 			but_down = 0;
-			display_freq(t);
+			display_freq(periodo);
 		}
 		
 		if(but_led){
-			pisca_led(n, t);
+			display_freq(periodo);
+			pisca_led(n);
 			but_led = 0;
+		}
+		
+		if(display_refresh){
+			display_freq(periodo);
+			display_refresh = 0;
 		}
 		
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI); 
