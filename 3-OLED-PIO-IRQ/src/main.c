@@ -53,6 +53,7 @@
 #define BUT3_PIO_IDX_MASK (1u << BUT3_PIO_IDX)
 
 #define CLK 300000000
+#define N 30
 
 /************************************************************************/
 /* constants                                                            */
@@ -307,7 +308,6 @@ int main (void)
   
 
   /* Insert application code here, after the board has been initialized. */
-	int n = 30;
 	
 	while(1) {
 
@@ -328,7 +328,7 @@ int main (void)
 		
 		if(but_led){
 			display_freq(periodo);
-			pisca_led(n);
+			pisca_led(N);
 			but_led = 0;
 		}
 		
