@@ -3670,10 +3670,10 @@ void but2_callback(void)
 
 void but3_callback(void)
 {
-	periodo -= 100;
+	periodo += 100;
   40158c:	4a03      	ldr	r2, [pc, #12]	; (40159c <but3_callback+0x10>)
   40158e:	6813      	ldr	r3, [r2, #0]
-  401590:	3b64      	subs	r3, #100	; 0x64
+  401590:	3364      	adds	r3, #100	; 0x64
   401592:	6013      	str	r3, [r2, #0]
 	display_refresh = 1;
   401594:	2201      	movs	r2, #1
@@ -3741,8 +3741,8 @@ void but3_callback(void)
 void pisca_status(int i, int n){
   401600:	b570      	push	{r4, r5, r6, lr}
   401602:	b082      	sub	sp, #8
-	int w = 100/n;
-  401604:	2464      	movs	r4, #100	; 0x64
+	int w = 90/n;
+  401604:	245a      	movs	r4, #90	; 0x5a
   401606:	fb94 f4f1 	sdiv	r4, r4, r1
 	
 	if ( x == 20){
@@ -3750,8 +3750,8 @@ void pisca_status(int i, int n){
   40160c:	681b      	ldr	r3, [r3, #0]
   40160e:	2b14      	cmp	r3, #20
   401610:	d00f      	beq.n	401632 <pisca_status+0x32>
-		gfx_mono_draw_filled_rect(20, 24, 100, 5, 0);
-		gfx_mono_draw_rect(20, 24, 100, 5, 1);
+		gfx_mono_draw_filled_rect(20, 24, 90, 5, 0);
+		gfx_mono_draw_rect(20, 24, 90, 5, 1);
 	}
 	
 	gfx_mono_draw_filled_rect(x, 24, w, 5, 1);
@@ -3768,8 +3768,8 @@ void pisca_status(int i, int n){
   401624:	682b      	ldr	r3, [r5, #0]
   401626:	441c      	add	r4, r3
 	
-	if ( x == 120){
-  401628:	2c78      	cmp	r4, #120	; 0x78
+	if ( x == 110){
+  401628:	2c6e      	cmp	r4, #110	; 0x6e
   40162a:	d013      	beq.n	401654 <pisca_status+0x54>
 	x += w;
   40162c:	602c      	str	r4, [r5, #0]
@@ -3778,20 +3778,20 @@ void pisca_status(int i, int n){
 }
   40162e:	b002      	add	sp, #8
   401630:	bd70      	pop	{r4, r5, r6, pc}
-		gfx_mono_draw_filled_rect(20, 24, 100, 5, 0);
+		gfx_mono_draw_filled_rect(20, 24, 90, 5, 0);
   401632:	2300      	movs	r3, #0
   401634:	9300      	str	r3, [sp, #0]
   401636:	2305      	movs	r3, #5
-  401638:	2264      	movs	r2, #100	; 0x64
+  401638:	225a      	movs	r2, #90	; 0x5a
   40163a:	2118      	movs	r1, #24
   40163c:	2014      	movs	r0, #20
   40163e:	4d08      	ldr	r5, [pc, #32]	; (401660 <pisca_status+0x60>)
   401640:	47a8      	blx	r5
-		gfx_mono_draw_rect(20, 24, 100, 5, 1);
+		gfx_mono_draw_rect(20, 24, 90, 5, 1);
   401642:	2301      	movs	r3, #1
   401644:	9300      	str	r3, [sp, #0]
   401646:	2305      	movs	r3, #5
-  401648:	2264      	movs	r2, #100	; 0x64
+  401648:	225a      	movs	r2, #90	; 0x5a
   40164a:	2118      	movs	r1, #24
   40164c:	2014      	movs	r0, #20
   40164e:	4d05      	ldr	r5, [pc, #20]	; (401664 <pisca_status+0x64>)
@@ -4264,7 +4264,7 @@ int main (void)
   401946:	4b22      	ldr	r3, [pc, #136]	; (4019d0 <main+0x98>)
   401948:	4798      	blx	r3
   /* Insert application code here, after the board has been initialized. */
-	int n = 5;
+	int n = 30;
 	
 	while(1) {
 
@@ -4348,7 +4348,7 @@ int main (void)
   4019a2:	4b0f      	ldr	r3, [pc, #60]	; (4019e0 <main+0xa8>)
   4019a4:	4798      	blx	r3
 			pisca_led(n);
-  4019a6:	2005      	movs	r0, #5
+  4019a6:	201e      	movs	r0, #30
   4019a8:	4b12      	ldr	r3, [pc, #72]	; (4019f4 <main+0xbc>)
   4019aa:	4798      	blx	r3
 			but_led = 0;

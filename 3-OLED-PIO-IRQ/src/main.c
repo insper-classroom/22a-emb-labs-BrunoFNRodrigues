@@ -121,17 +121,17 @@ void but3_callback(void)
 /************************************************************************/
 //Atualiza progresso da piscada
 void pisca_status(int i, int n){
-	int w = 100/n;
+	int w = 90/n;
 	
 	if ( x == 20){
-		gfx_mono_draw_filled_rect(20, 24, 100, 5, 0);
-		gfx_mono_draw_rect(20, 24, 100, 5, 1);
+		gfx_mono_draw_filled_rect(20, 24, 90, 5, 0);
+		gfx_mono_draw_rect(20, 24, 90, 5, 1);
 	}
 	
 	gfx_mono_draw_filled_rect(x, 24, w, 5, 1);
 	x += w;
 	
-	if ( x == 120){
+	if ( x == 110){
 		x = 20;
 	}
 }
@@ -307,7 +307,7 @@ int main (void)
   
 
   /* Insert application code here, after the board has been initialized. */
-	int n = 5;
+	int n = 30;
 	
 	while(1) {
 
