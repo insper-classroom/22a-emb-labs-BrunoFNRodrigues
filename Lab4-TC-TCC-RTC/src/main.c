@@ -405,7 +405,7 @@ int main (void)
 	TC_init(TC0, ID_TC2, 2, 5);
 	tc_start(TC0, 2);
 	
-	RTT_init(1, 4, RTT_MR_RTTINCIEN);
+	RTT_init(0.25, 1, RTT_MR_RTTINCIEN);
 	
     /** Configura RTC */
     calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
