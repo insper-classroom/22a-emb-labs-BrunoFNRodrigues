@@ -60,6 +60,9 @@ typedef struct  {
 
 volatile char flag_rtc_alarm = 0;
 volatile char flag_set_alarm = 0;
+volatile char flag_relogio = 0;
+volatile char flag_but3 = 0;
+volatile char flag_rtc_alarm_2 = 0;
 int segundo = 0;
 int minuto = 0;
 int hora = 0;
@@ -87,7 +90,7 @@ void TC0_Handler(void) {
 	
 	/** Muda o estado do LED (pisca) **/
 	
-	segundo++;
+	flag_relogio = 1;
 	 
 }
 
@@ -117,6 +120,19 @@ void TC2_Handler(void) {
 	
 }
 
+void TC3_Handler(void) {
+	/**
+	* Devemos indicar ao TC que a interrupção foi satisfeita.
+	* Isso é realizado pela leitura do status do periférico
+	**/
+	
+	volatile uint32_t status = tc_get_status(TC1, 0);
+	
+	/** Muda o estado do LED (pisca) **/
+	pin_toggle(OLED3_PIO, OLED3_PIO_IDX_MASK);
+	
+}
+
 void RTT_Handler(void) {
 	uint32_t ul_status;
 
@@ -141,7 +157,13 @@ void RTC_Handler(void) {
 	/* Time or date alarm */
 	if ((ul_status & RTC_SR_ALARM) == RTC_SR_ALARM) {
 		// o código para irq de alame vem aqui
-		flag_rtc_alarm = 1;
+		if(flag_but3){
+			flag_rtc_alarm = 1;	
+		}else{
+			flag_rtc_alarm_2 = 1;
+			flag_but3 = 0;
+		}
+		
 	}
 
 	rtc_clear_status(RTC, RTC_SCCR_SECCLR);
@@ -155,6 +177,13 @@ void RTC_Handler(void) {
 void but3_callback()
 {
 	flag_set_alarm = 1;
+	flag_but3 = 1;
+}
+
+void but1_callback()
+{
+	flag_set_alarm = 1;
+	
 }	
 
 /************************************************************************/
@@ -291,9 +320,54 @@ void BUT_init()
 	// com prioridade 4 (quanto mais próximo de 0 maior)
 	NVIC_EnableIRQ(BUT3_PIO_ID);
 	NVIC_SetPriority(BUT3_PIO_ID, 4); // Prioridade 4	
+	
+	// Inicializa clock do periférico PIO responsavel pelo botao
+	pmc_enable_periph_clk(BUT1_PIO_ID);
+
+	// Configura PIO para lidar com o pino do botão como entrada
+	// com pull-up
+	pio_configure(BUT1_PIO, PIO_INPUT, BUT1_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE);
+	pio_set_debounce_filter(BUT1_PIO, BUT1_PIO_IDX_MASK, 60);
+
+	// Configura interrupção no pino referente ao botao e associa
+	// função de callback caso uma interrupção for gerada
+	// a função de callback é a: but_callback()
+	pio_handler_set(BUT1_PIO,
+	BUT1_PIO_ID,
+	BUT1_PIO_IDX_MASK,
+	PIO_IT_FALL_EDGE,
+	but1_callback);
+
+	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
+	pio_enable_interrupt(BUT1_PIO, BUT1_PIO_IDX_MASK);
+	pio_get_interrupt_status(BUT1_PIO);
+
+	// Configura NVIC para receber interrupcoes do PIO do botao
+	// com prioridade 4 (quanto mais próximo de 0 maior)
+	NVIC_EnableIRQ(BUT1_PIO_ID);
+	NVIC_SetPriority(BUT1_PIO_ID, 4); // Prioridade 4
 }
 
 void display_hora(){
+	segundo++;
+	if(segundo == 60)
+	{
+		segundo = 0;
+		minuto++;
+		gfx_mono_draw_string(" ", 90,8, &sysfont);
+		if(minuto == 60)
+		{
+			minuto = 0;
+			hora++;
+			gfx_mono_draw_string(" ", 60,8, &sysfont);
+			if(hora == 24)
+			{
+				hora = 0;
+				gfx_mono_draw_string(" ", 30,8, &sysfont);
+			}
+		}
+	}
+	
 	char hora_str[128];
 	sprintf(hora_str, "%d", hora);
 	
@@ -340,27 +414,15 @@ int main (void)
    display_hora();
 
   /* Insert application code here, after the board has been initialized. */
+  int count = 0;
 	while(1) {
 		
-
-		if(segundo == 60)
+		if(flag_relogio)
 		{
-			segundo = 0;
-			minuto++;
-			gfx_mono_draw_string(" ", 90,8, &sysfont);
-			if(minuto == 60)
-			{
-				minuto = 0;
-				hora++;
-				gfx_mono_draw_string(" ", 60,8, &sysfont);
-				if(hora == 24)
-				{
-					hora = 0;
-					gfx_mono_draw_string(" ", 30,8, &sysfont);
-				}
-			}
+			display_hora();
+			flag_relogio = 0;
 		}
-		display_hora();
+
 		if (flag_set_alarm)
 		{
 			/* configura alarme do RTC para daqui 20 segundos */
@@ -369,7 +431,11 @@ int main (void)
 			rtc_get_time(RTC, &current_hour, &current_min, &current_sec);
 			rtc_get_date(RTC, &current_year, &current_month, &current_day, &current_week);
 			rtc_set_date_alarm(RTC, 1, current_month, 1, current_day);
-			rtc_set_time_alarm(RTC, 1, current_hour, 1, current_min, 1, current_sec + 20);
+			if (current_sec > 40){
+				rtc_set_time_alarm(RTC, 1, current_hour, 1, current_min + 1, 1, current_sec - 40);
+			}else{
+				rtc_set_time_alarm(RTC, 1, current_hour, 1, current_min, 1, current_sec + 20);
+			}
 			flag_set_alarm = 0;
 		}
 	
@@ -377,6 +443,16 @@ int main (void)
 		if(flag_rtc_alarm){
 			pisca_led(5, 200);
 			flag_rtc_alarm = 0;
+		}
+		
+		if(flag_rtc_alarm_2)
+		{
+			TC_init(TC1, ID_TC3, 0, 10);
+			tc_start(TC1, 0);
+			count = segundo;
+			flag_rtc_alarm_2 = 0;
+		}else if(segundo - count >= 10 || count-60+segundo >= 30){
+			tc_stop(TC1, 0);
 		}
 		
 		pmc_sleep(SAM_PM_SMODE_SLEEP_WFI);	
