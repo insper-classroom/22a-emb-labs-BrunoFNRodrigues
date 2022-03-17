@@ -411,10 +411,10 @@ int main (void)
     calendar rtc_initial = {2018, 3, 19, 12, 15, 45 ,1};
     RTC_init(RTC, ID_RTC, rtc_initial, RTC_IER_ALREN);
    
-   display_hora();
+	display_hora();
 
   /* Insert application code here, after the board has been initialized. */
-  int count = 0;
+	int count = -10000;
 	while(1) {
 		
 		if(flag_relogio)
