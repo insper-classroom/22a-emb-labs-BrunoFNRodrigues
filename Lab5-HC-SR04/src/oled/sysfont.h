@@ -1,9 +1,9 @@
 /**
  * \file
  *
- * \brief Chip-specific sleep manager configuration
+ * \brief Graphical System Font system
  *
- * Copyright (c) 2015 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2009-2015 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -43,10 +43,28 @@
 /*
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
-#ifndef CONF_SLEEPMGR_H
-#define CONF_SLEEPMGR_H
 
-// Sleep manager options
-#define CONFIG_SLEEPMGR_ENABLE
+#ifndef SYSFONT_H_INCLUDED
+#define SYSFONT_H_INCLUDED
 
-#endif /* CONF_SLEEPMGR_H */
+#include "conf_sysfont.h"
+#include "gfx_mono.h"
+#include "gfx_mono_text.h"
+
+/**
+ * \ingroup asfdoc_common2_gfx_mono_font
+ * \defgroup asfdoc_common2_gfx_mono_sysfont System font
+ *
+ * The system font objects are globally available for a graphical application.
+ * System fonts are by design read only, hence there are not any functions to
+ * change them during runtime. If the application needs additional fonts it
+ * should add additional font objects.
+ * \section asfdoc_common2_gfx_mono_sysfont_api_overview API Overview
+ * @{
+ */
+
+extern struct font sysfont;
+
+/** @} */
+
+#endif /* SYSFONT_H_INCLUDED */
