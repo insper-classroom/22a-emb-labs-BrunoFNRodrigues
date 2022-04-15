@@ -196,7 +196,7 @@ void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
 	uint32_t ul_sysclk = sysclk_get_cpu_hz();
 
 	/* Configura o PMC */
-	pmc_enable_periph_clk(ID_TC);
+	pmc_enable_periph_clk(ID_TC);	
 
 	/** Configura o TC para operar em  freq hz e interrupçcão no RC compare */
 	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);

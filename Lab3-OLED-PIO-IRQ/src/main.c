@@ -258,36 +258,7 @@ void io_init(void)
 	// com prioridade 4 (quanto mais próximo de 0 maior)
 	NVIC_EnableIRQ(BUT2_PIO_ID);
 	NVIC_SetPriority(BUT2_PIO_ID, 4); // Prioridade 4
-	
-	/**************************************************/
-	// BOTÂO DA OLED3
-	/**************************************************/
-	
-	// Inicializa clock do periférico PIO responsavel pelo botao
-	pmc_enable_periph_clk(BUT3_PIO_ID);
-
-	// Configura PIO para lidar com o pino do botão como entrada
-	// com pull-up
-	pio_configure(BUT3_PIO, PIO_INPUT, BUT3_PIO_IDX_MASK, PIO_PULLUP|PIO_DEBOUNCE);
-	pio_set_debounce_filter(BUT3_PIO, BUT3_PIO_IDX_MASK, 60);
-
-	// Configura interrupção no pino referente ao botao e associa
-	// função de callback caso uma interrupção for gerada
-	// a função de callback é a: but_callback()
-	pio_handler_set(BUT3_PIO,
-	BUT3_PIO_ID,
-	BUT3_PIO_IDX_MASK,
-	PIO_IT_RISE_EDGE,
-	but3_callback);
-
-	// Ativa interrupção e limpa primeira IRQ gerada na ativacao
-	pio_enable_interrupt(BUT3_PIO, BUT3_PIO_IDX_MASK);
-	pio_get_interrupt_status(BUT3_PIO);
-	
-	// Configura NVIC para receber interrupcoes do PIO do botao
-	// com prioridade 4 (quanto mais próximo de 0 maior)
-	NVIC_EnableIRQ(BUT3_PIO_ID);
-	NVIC_SetPriority(BUT3_PIO_ID, 4); // Prioridade 4
+		
 }
 
 /************************************************************************/

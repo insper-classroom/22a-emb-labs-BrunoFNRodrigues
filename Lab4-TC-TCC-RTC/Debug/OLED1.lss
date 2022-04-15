@@ -4385,7 +4385,7 @@ void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
 	uint32_t ul_sysclk = sysclk_get_cpu_hz();
 
 	/* Configura o PMC */
-	pmc_enable_periph_clk(ID_TC);
+	pmc_enable_periph_clk(ID_TC);	
   40191e:	4608      	mov	r0, r1
   401920:	4b1c      	ldr	r3, [pc, #112]	; (401994 <TC_init+0x84>)
   401922:	4798      	blx	r3

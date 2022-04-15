@@ -61,6 +61,7 @@
 
 static void RTT_init(float freqPrescale, uint32_t IrqNPulses, uint32_t rttIRQSource);
 
+
 /************************************************************************/
 /* constants                                                            */
 /************************************************************************/
@@ -75,6 +76,9 @@ volatile double freq = 1/(0.000058*2);
 volatile char trig_flag = 0;
 volatile char display_flag = 0;
 volatile double timer = 0.0;
+volatile char error_flag = 0;
+volatile int time_out = 0;
+
 
 /************************************************************************/
 /* prototypes                                                           */
@@ -91,6 +95,7 @@ void echo_callback(void);
 void but_callback()
 {
 	trig_flag = 1;
+	tc_start(TC0, 0);
 }
 
 void echo_callback()
@@ -99,6 +104,7 @@ void echo_callback()
 	{
 		//botão levantado
 		timer = rtt_read_timer_value(RTT);
+		tc_stop(TC0, 0);
 		display_flag = 1;
 	}else{
 		RTT_init(freq, 0, 0);
@@ -112,6 +118,28 @@ void RTT_Handler(void) {
 	ul_status = rtt_get_status(RTT);
 	
 
+}
+
+void TC0_Handler(void) {
+	/**
+	* Devemos indicar ao TC que a interrupção foi satisfeita.
+	* Isso é realizado pela leitura do status do periférico
+	**/
+	volatile uint32_t status = tc_get_status(TC0, 0);
+	
+	/** Muda o estado do LED (pisca) **/
+	
+	time_out++;
+	
+	if (time_out == 1)
+	{
+		error_flag = 1;
+		display_flag = 1;
+		time_out = 0;
+		tc_stop(TC0,0);
+	}
+	
+	 
 }
 
 /************************************************************************/
@@ -144,6 +172,25 @@ static void RTT_init(float freqPrescale, uint32_t IrqNPulses, uint32_t rttIRQSou
 	else
 	rtt_disable_interrupt(RTT, RTT_MR_RTTINCIEN | RTT_MR_ALMIEN);
 	
+}
+
+void TC_init(Tc * TC, int ID_TC, int TC_CHANNEL, int freq){
+	uint32_t ul_div;
+	uint32_t ul_tcclks;
+	uint32_t ul_sysclk = sysclk_get_cpu_hz();
+
+	/* Configura o PMC */
+	pmc_enable_periph_clk(ID_TC);
+
+	/** Configura o TC para operar em  freq hz e interrupçcão no RC compare */
+	tc_find_mck_divisor(freq, ul_sysclk, &ul_div, &ul_tcclks, ul_sysclk);
+	tc_init(TC, TC_CHANNEL, ul_tcclks | TC_CMR_CPCTRG);
+	tc_write_rc(TC, TC_CHANNEL, (ul_sysclk / ul_div) / freq);
+
+	/* Configura NVIC*/
+	NVIC_SetPriority(ID_TC, 4);
+	NVIC_EnableIRQ((IRQn_Type) ID_TC);
+	tc_enable_interrupt(TC, TC_CHANNEL, TC_IER_CPCS);
 }
 
 // Função de inicialização do uC
@@ -200,16 +247,61 @@ void init(void){
 
 }
 
-void display_refresh()
-{
-	char dist_str[128];
-	double dist = ((sound_v * (timer/freq))/2.0)*100;
-	sprintf(dist_str, "%.2f", dist);
-		
-	gfx_mono_draw_string("d:", 10,8, &sysfont);
-	gfx_mono_draw_string(dist_str, 30,8, &sysfont);
+void clear_display(){
+	gfx_mono_generic_draw_filled_rect(100, 8, 6, 60, 0);
+	gfx_mono_generic_draw_filled_rect(107, 8, 6, 60, 0);
+	gfx_mono_generic_draw_filled_rect(114, 8, 6, 60, 0);
 }
 
+void display_refresh(double dist)
+{
+	char dist_str[128];
+	sprintf(dist_str, "d:%.2f", dist);
+	if (dist > 400 | error_flag)
+	{
+		clear_display();
+		
+		gfx_mono_draw_string("          ", 10,8, &sysfont);	
+		gfx_mono_draw_string("Error", 10,8, &sysfont);	
+		error_flag = 0;
+	}else{
+		clear_display();
+		
+		
+		gfx_mono_draw_string("          ", 10,8, &sysfont);
+		gfx_mono_draw_string(dist_str, 10,8, &sysfont);
+	}
+
+}
+
+void display_g(double arrey[3])
+{
+	clear_display();
+
+	int pos = 100;
+	for(int j =0; j < 3; j++)
+	{
+		int block = (arrey[j]*60/400)*2;
+		if(block == 0 | arrey[j] > 400){
+			gfx_mono_generic_draw_filled_rect(pos, 8, 6, 1, 1);
+		}else{
+			gfx_mono_generic_draw_filled_rect(pos, 8, 6, block, 1);	
+		}
+
+		pos += 7;
+	}
+
+	
+}
+
+void add_dist(double arrey[3], double dist)
+{
+	for(int i = 3; i > 0; i--)
+	{
+		arrey[i] = arrey[i-1];
+	}
+	arrey[0] = dist;
+}
 
 /************************************************************************/
 /* Main                                                                 */
@@ -221,6 +313,9 @@ void display_refresh()
 int main(void)
 {
   init();
+  TC_init(TC0, ID_TC0, 0, 1);	
+  
+  double arrey[5] = {0,0,0};
 
   // super loop
   // aplicacoes embarcadas não devem sair do while(1).
@@ -242,8 +337,11 @@ int main(void)
 	{
 		pio_disable_interrupt(ECHO_PIO, ECHO_PIO_IDX_MASK);
 		pio_get_interrupt_status(ECHO_PIO);
-		
-		display_refresh();
+		double dist = ((sound_v * (timer/freq))/2.0)*100;
+		add_dist(arrey, dist);
+		display_refresh(dist);
+		display_g(arrey);
+
 		display_flag = 0;
 	}
 
