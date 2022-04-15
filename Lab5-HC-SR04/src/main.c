@@ -248,9 +248,9 @@ void init(void){
 }
 
 void clear_display(){
-	gfx_mono_generic_draw_filled_rect(100, 8, 6, 60, 0);
-	gfx_mono_generic_draw_filled_rect(107, 8, 6, 60, 0);
-	gfx_mono_generic_draw_filled_rect(114, 8, 6, 60, 0);
+	gfx_mono_generic_draw_filled_rect(90, 8, 8, 60, 0);
+	gfx_mono_generic_draw_filled_rect(99, 8, 8, 60, 0);
+	gfx_mono_generic_draw_filled_rect(108, 8, 8, 60, 0);
 }
 
 void display_refresh(double dist)
@@ -278,17 +278,17 @@ void display_g(double arrey[3])
 {
 	clear_display();
 
-	int pos = 100;
+	int pos = 90;
 	for(int j =0; j < 3; j++)
 	{
 		int block = (arrey[j]*60/400)*2;
 		if(block == 0 | arrey[j] > 400){
-			gfx_mono_generic_draw_filled_rect(pos, 8, 6, 1, 1);
+			gfx_mono_generic_draw_filled_rect(pos, 8, 8, 1, 1);
 		}else{
-			gfx_mono_generic_draw_filled_rect(pos, 8, 6, block, 1);	
+			gfx_mono_generic_draw_filled_rect(pos, 8, 8, block, 1);	
 		}
 
-		pos += 7;
+		pos += 9;
 	}
 
 	
