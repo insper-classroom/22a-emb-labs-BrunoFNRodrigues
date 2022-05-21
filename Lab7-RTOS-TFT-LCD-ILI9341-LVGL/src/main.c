@@ -13,7 +13,7 @@
 /************************************************************************/
 
 LV_FONT_DECLARE(dseg70);
-LV_FONT_DECLARE(dseg50);
+LV_FONT_DECLARE(dseg35);
 LV_FONT_DECLARE(dseg30);
 
 /************************************************************************/
@@ -33,6 +33,7 @@ static lv_indev_drv_t indev_drv;
 
 lv_obj_t * temp_amb;
 lv_obj_t * temp_termo;
+lv_obj_t * temp_termo_deci;
 lv_obj_t * temp_rel;
 lv_obj_t * clk_value;
 
@@ -50,6 +51,8 @@ typedef struct  {
 } calendar;
 
 SemaphoreHandle_t xSemaphoreRTC;
+
+volatile int deci = 0;
 
 /************************************************************************/
 /* RTOS                                                                 */
@@ -124,7 +127,13 @@ static void up_handler(lv_event_t * e) {
 	if(code == LV_EVENT_CLICKED) {
 		c = lv_label_get_text(temp_termo);
 		temp = atoi(c);
-		lv_label_set_text_fmt(temp_termo, "%02d", temp + 1);
+		deci++;
+		
+		if(deci == 10){
+			temp++;
+			deci = 0;
+		}
+		lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);
 	}
 }
 
@@ -135,7 +144,13 @@ static void down_handler(lv_event_t * e) {
 	if(code == LV_EVENT_CLICKED) {
 		c = lv_label_get_text(temp_termo);
 		temp = atoi(c);
-		lv_label_set_text_fmt(temp_termo, "%02d", temp - 1);
+		deci--;
+		
+		if(deci <= -1){
+			temp--;
+			deci = 9;
+		}
+		lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);
 	}
 }
 
@@ -194,14 +209,14 @@ void lv_termostato(void) {
 	lv_obj_align(temp_amb, LV_ALIGN_LEFT_MID, 35 , -45);
 	lv_obj_set_style_text_font(temp_amb, &dseg70, LV_STATE_DEFAULT);
 	lv_obj_set_style_text_color(temp_amb, lv_color_white(), LV_STATE_DEFAULT);
-	lv_label_set_text_fmt(temp_amb, "%02d", 24);
+	lv_label_set_text_fmt(temp_amb, "%02d.%01d", 24, 5);
 
 	// Valor do temperatura do termostato
 	temp_termo = lv_label_create(lv_scr_act());
 	lv_obj_align(temp_termo, LV_ALIGN_RIGHT_MID, -10 , -30);
-	lv_obj_set_style_text_font(temp_termo, &dseg50, LV_STATE_DEFAULT);
+	lv_obj_set_style_text_font(temp_termo, &dseg35, LV_STATE_DEFAULT);
 	lv_obj_set_style_text_color(temp_termo, lv_color_white(), LV_STATE_DEFAULT);
-	lv_label_set_text_fmt(temp_termo, "%02d", 18);	
+	lv_label_set_text_fmt(temp_termo, "%02d.%01d", 18, deci);	
 	
 	//RELOGIO HORAS (VALOR)
 	clk_value = lv_label_create(lv_scr_act());
