@@ -38,7 +38,7 @@ lv_obj_t * temp_rel;
 lv_obj_t * clk_value;
 
 volatile uint32_t current_hour, current_min, current_sec;
-volatile char clock_setter=0;
+volatile char clk_set = 0;
 
 typedef struct  {
 	uint32_t year;
@@ -113,10 +113,7 @@ static void config_handler(lv_event_t * e) {
 	lv_event_code_t code = lv_event_get_code(e);
 
 	if(code == LV_EVENT_CLICKED) {
-		LV_LOG_USER("Clicked");
-	}
-	else if(code == LV_EVENT_VALUE_CHANGED) {
-		LV_LOG_USER("Toggled");
+		clk_set = !clk_set;
 	}
 }
 
@@ -125,15 +122,27 @@ static void up_handler(lv_event_t * e) {
 	char *c;
 	int temp;
 	if(code == LV_EVENT_CLICKED) {
-		c = lv_label_get_text(temp_termo);
-		temp = atoi(c);
-		deci++;
-		
-		if(deci == 10){
-			temp++;
-			deci = 0;
+		if(clk_set){
+			current_min++;
+			if(current_min == 60){
+				current_hour++;
+				current_min = 0;
+			}
+			if(current_hour == 24){
+				current_hour = 0;
+			}
+			rtc_set_time(RTC, current_hour, current_min, current_sec);			
+		} else {
+			c = lv_label_get_text(temp_termo);
+			temp = atoi(c);
+			deci++;
+			
+			if(deci == 10){
+				temp++;
+				deci = 0;
+			}
+			lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);	
 		}
-		lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);
 	}
 }
 
@@ -142,15 +151,29 @@ static void down_handler(lv_event_t * e) {
 	char *c;
 	int temp;
 	if(code == LV_EVENT_CLICKED) {
-		c = lv_label_get_text(temp_termo);
-		temp = atoi(c);
-		deci--;
-		
-		if(deci <= -1){
-			temp--;
-			deci = 9;
+		if(clk_set){
+			current_min--;
+			
+			if(current_min < 0){
+				current_min = 59;
+				current_hour--;
+				
+				if(current_hour < 0){
+					current_hour = 23;
+				}
+			}
+			rtc_set_time(RTC, current_hour, current_min, current_sec);
+		} else {
+			c = lv_label_get_text(temp_termo);
+			temp = atoi(c);
+			deci--;
+			
+			if(deci <= -1){
+				temp--;
+				deci = 9;
+			}
+			lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);	
 		}
-		lv_label_set_text_fmt(temp_termo, "%02d.%01d", temp, deci);
 	}
 }
 
