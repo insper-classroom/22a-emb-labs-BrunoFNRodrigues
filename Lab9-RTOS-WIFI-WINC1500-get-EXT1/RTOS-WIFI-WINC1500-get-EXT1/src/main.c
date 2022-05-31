@@ -90,6 +90,9 @@ void LED_init(int estado) {
 	pio_set_output(LED_PIO, LED_PIO_IDX_MASK, estado, 0, 0);
 }
 
+void get_format(uint8_t *g_sendBuffer, char *getpath){
+	sprintf(g_sendBuffer, "GET %s HTTP/1.1\r\n Accept: */*\r\n\r\n", getpath);
+}
 /************************************************************************/
 /* callbacks                                                            */
 /************************************************************************/
@@ -264,7 +267,7 @@ static void task_process(void *pvParameters) {
 
       case GET:
       printf("STATE: GET \n");
-      sprintf((char *)g_sendBuffer, MAIN_PREFIX_BUFFER);
+      get_format(&g_sendBuffer, "/status");
       send(tcp_client_socket, g_sendBuffer, strlen((char *)g_sendBuffer), 0);
       state = ACK;
       break;
